@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aeptf
+      # CHANGE THIS before using outside a local/dev environment.
+      POSTGRES_PASSWORD: change-me-before-use
+      POSTGRES_DB: aeptf
+    ports:
+      - "5432:5432"
+    volumes:
+      - aeptf_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aeptf"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      AEPTF__DATABASE__URL: "postgresql+psycopg2://aeptf:change-me-before-use@db:5432/aeptf"
+      AEPTF__APP__HOST: "0.0.0.0"
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "pip install --no-cache-dir psycopg2-binary &&
+             aeptf init-db &&
+             aeptf serve --host 0.0.0.0"
+
+volumes:
+  aeptf_pgdata:

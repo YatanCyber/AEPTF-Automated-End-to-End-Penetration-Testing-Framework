@@ -1,0 +1,62 @@
+# AEPTF default configuration
+# Environment variables override these values using the prefix AEPTF__ with
+# double-underscore nesting, e.g. AEPTF__SAFETY__APPROVED_TARGETS=127.0.0.1,10.0.0.5
+
+app:
+  name: "AEPTF"
+  environment: "development"
+  host: "127.0.0.1"
+  port: 8000
+
+logging:
+  level: "INFO"
+  json: false
+  file: null   # e.g. "logs/aeptf.log"
+
+database:
+  # sqlite (default, zero-config) or a full SQLAlchemy URL for PostgreSQL, e.g.
+  # postgresql+psycopg2://aeptf:aeptf@localhost:5432/aeptf
+  url: "sqlite:///./aeptf.db"
+  echo: false
+
+safety:
+  # When true (recommended, and enforced regardless of this flag in the
+  # exploitation package) every plugin run must target a host or IP present
+  # in approved_targets. There is no bypass flag: this is a hard gate, not
+  # a suggestion, and plugins are required to call it before acting.
+  authorization_required: true
+  approved_targets:
+    - 127.0.0.1
+    - localhost
+  # Hard ceilings enforced by the bounded plugins below. These exist so a
+  # single run cannot silently become an unbounded scan or crawl.
+  max_scan_ports: 100
+  network_timeout_seconds: 5
+  nmap_timeout_seconds: 120
+  # Minimum seconds between two runs against the same target. 0 = off.
+  min_seconds_between_runs: 0
+
+plugins:
+  enabled:
+    - aeptf.modules.reconnaissance.discovery.HostDiscoveryPlugin
+    - aeptf.modules.scanning.port_scan.TopPortsScanPlugin
+    - aeptf.modules.enumeration.http_metadata.HttpMetadataPlugin
+
+# Named, ordered pipelines. Each entry is a list of plugin short names
+# (as shown by `aeptf list-plugins`), run in that fixed order. Add your
+# own pipelines here -- no code change required. `POST /pipelines` and
+# `aeptf pipeline` both accept `--name <key>` and fall back to `default`.
+pipelines:
+  default: "default"
+  definitions:
+    default:
+      - reconnaissance
+      - scanning
+      - enumeration
+    recon-only:
+      - reconnaissance
+    web-only:
+      - enumeration
+
+reporting:
+  output_dir: "reports"
