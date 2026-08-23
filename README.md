@@ -46,7 +46,7 @@ plugins still use fixed, non-configurable-by-request commands.
 ## Quick start (Linux)
 
 ```bash
-git clone <your-repository-url> aeptf
+git clone https://github.com/YatanCyber/AEPTF-Automated-End-to-End-Penetration-Testing-Framework
 cd aeptf
 ./install.sh
 source .venv/bin/activate
